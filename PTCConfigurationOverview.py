@@ -2,9 +2,8 @@
 # Handcrafted at ZF -TCI, Hyderabad
 # Authors : Kiran Reddy, Arun Kumar
 ToolName = 'PTCConfigurationOverview'
-ToolRev = "1.4.4"
-LastUpdatedOn = "31st August,2021 "
-#Last Evolution : 30th Jul 2021
+ToolRev = "1.5"
+LastUpdatedOn = "9th September, 2021 "
 #################################################################
 
 
@@ -36,10 +35,6 @@ percentage = 0
 FuncConfigVerdict = []
 ConnectionAttempt = 0
 ProjectsToAssess = []
-
-
-
-
 
 
 filterKeywordsInputMemory ="KeyWord_1,KeyWord_2,"
@@ -127,10 +122,12 @@ FuncAnlsDB_ProjCatFoldrStruct = {
 
 }
 
-
+def InfoPrompt(InfoType, message):
+    messagebox.showinfo(InfoType, message)
 
 def ErrorPrompt(ErrorType, message):
     messagebox.showwarning(ErrorType, message)
+
 
 def resource_path(relative_path):
 
@@ -541,6 +538,9 @@ def DWnld_XM_and_IntefaceFiles(project,xmlFilePath,InterfaceFilePath,xmfileNAme,
             ProjectTobeAssessed_Interface, FiletobeSavedAt_interface,InterfaceFileNAme)
         PARAMETERfileCommand = r'''si projectco  --yes --nolock --project={} --targetFile={} "{}" '''.format(
             ProjectTobeAssessed_XML, FiletobeSavedAt_paramXML,xmfileNAme)
+        print(PARAMETERfileCommand)
+        print(MACROfileCommand)
+
 
         print(PARAMETERfileCommand)
 
@@ -754,7 +754,7 @@ MessageWindow = scrolledtext.ScrolledText(FrameLeft_Notebook_frame_03,
                                       font=("Segoe UI",
                                             10),background = "Dodgerblue4",foreground='white')
 scrolledtext.ScrolledText()
-MessageWindow.pack(fill=BOTH,expand = 0,side = "top")
+MessageWindow.pack(fill=BOTH,expand = 1,side = "top")
 MessagesLog("Invoked PTCConfigurationOverview Tool Rev : " + str(ToolRev))
 MessageWindow.focus()
 
@@ -921,6 +921,14 @@ AboutBtn = Button(FrameLeft_Notebook_frame_01,image = IconFilepath_AboutIcon, fg
 #Kiran Code 1#Function 2
 TempFileSavePath = r"C:\Users\Z0083520\Desktop\PTC_Integrity_Scan\Downloads\Temp.txt"
 
+def GetFilteredProjectsForAnalysis_Func2():
+
+    RevisionsOrginalList = GetProjectRevisionsLabelsinProject(
+    "/EPB/ProductDevelopment/EPBi/08_Software/project.pj", "NA")
+
+    RevisionsList_Func2 = FilterOutProj2BAnalysed(RevisionsOrginalList)
+    return RevisionsList_Func2
+
 def LocateFunctionUsages():
 
     if len(str(FuncRevisionsDropDownUserEntered.get()).strip()) == 0:
@@ -991,11 +999,7 @@ def LocateFunctionUsages():
         if RevperationDropDownBtn.get() != "Same as":
             ProjectRevisionsRangeFinalList = GetProjectRevisionsRangeinProject(prjpath, Start_Rev, End_Rev)
 
-        RevisionsOrginalList = GetProjectRevisionsLabelsinProject(
-            "/EPB/ProductDevelopment/EPBi/08_Software/project.pj", "NA")
-
-        RevisionsList = FilterOutProj2BAnalysed(RevisionsOrginalList)
-        print(RevisionsList)
+        RevisionsList = GetFilteredProjectsForAnalysis_Func2()
 
         Count = 0
         for Revision in RevisionsList:
@@ -1031,7 +1035,12 @@ def LocateFunctionUsages():
             if (SWUnitDict["SWUnitRevision"] in ProjectRevisionsRangeFinalList):
                 SWUnitsFinalList.append(copy.deepcopy(SWUnitDict))
 
-        UpdateVisualTable(SWUnitsFinalList)
+        if len(SWUnitsFinalList) == 0 :
+            InfoPrompt("Status","Analysis Successful. However ,There were 0 matching results for the given conditions/filter.")
+        else :
+            UpdateVisualTable(SWUnitsFinalList)
+            InfoPrompt("Status",
+                       "Analysis Successful. Please View the Output tab for results")
 
     except Exception as exception:
         MessagesLog(str(exception))
@@ -1064,7 +1073,7 @@ def UpdateFuncDropDown_2():
 
 
 
-Label(FrameLeft_Notebook_frame1R_1_1,font=("Segoe UI",9), text="Projects Category",bg="white").grid(column=0,row=0,padx=5,pady=10,sticky='W',columnspan = 5)
+Label(FrameLeft_Notebook_frame1R_1_1,font=("Segoe UI",9), text="Function Category",bg="white").grid(column=0,row=0,padx=5,pady=10,sticky='W',columnspan = 5)
 ProjCatg_2_DropDownList = ["PBC" , "SSM" , "MMC"]
 ProjCategories_2_Dropdown = ttk.Combobox(FrameLeft_Notebook_frame1R_1_1, values=ProjCatg_2_DropDownList , width = 25,state="readonly" )
 ProjCategories_2_Dropdown.grid(row=0, column=1,
@@ -1087,7 +1096,7 @@ Label(FrameLeft_Notebook_frame1R_1_1,font=("Segoe UI",9), text="Select Function"
 
 FuncRevision = StringVar(FrameLeft_Notebook_frame1R_1_1, value='1.46')
 
-Label(FrameLeft_Notebook_frame1R_1_1,font=("Segoe UI",9), text="Function revision",bg="white").grid(column=0,row=2,padx=5,pady=10,sticky='W')
+Label(FrameLeft_Notebook_frame1R_1_1,font=("Segoe UI",9), text="Function Revision",bg="white").grid(column=0,row=2,padx=5,pady=10,sticky='W')
 #Entry(FrameLeft_Notebook_frame1R_1_1, width=20,textvariable=FuncRevision).grid(row=1, column=2,
 #                                                                               columnspan=1,
 #                                                                              sticky='W',
@@ -1267,25 +1276,49 @@ def FilterOutProj2BAnalysed(inputList) :
 
 def Filter_2_Prj2Anlys ():
     global Memory1_Proj2BanlysedWith,Memory1_Proj2BanlysedWithOut
-    EDIT_Filter_2_Projs2Banalysed = Toplevel(GUITopFrame)
-    EDIT_Filter_2_Projs2Banalysed.config(bg="white")
-    EDIT_Filter_2_Projs2Banalysed.title("Filter Projects to be analysed")
-    EDIT_Filter_2_Projs2Banalysed.resizable(False, False)  # x,y resizabling disabled
+    EDIT_Filter_2_Projs2BanalysedBase = Toplevel(GUITopFrame)
+    EDIT_Filter_2_Projs2BanalysedBase.config(bg="white")
+    EDIT_Filter_2_Projs2BanalysedBase.title("Filter Projects to be analysed")
+    EDIT_Filter_2_Projs2BanalysedBase.resizable(False, False)  # x,y resizabling disabled
     #EDIT_Filter_2_Projs2Banalysed.minsize(500, 200)
 
     try:
-        EDIT_Filter_2_Projs2Banalysed.iconbitmap(IconFilepath)
+        EDIT_Filter_2_Projs2BanalysedBase.iconbitmap(IconFilepath)
     except:
         pass
 
+    EDIT_Filter_2_Projs2Banalysed = LabelFrame(EDIT_Filter_2_Projs2BanalysedBase, text="",
+                                                fg="black", bg="white", bd=1, relief="groove")
+    EDIT_Filter_2_Projs2Banalysed.pack(fill=BOTH, expand=1, side="top")
+    EDIT_Filter_2_Projs2BanalysedR = LabelFrame(EDIT_Filter_2_Projs2BanalysedBase, text="Projects to be analysed :",
+                                                fg="black", bg="white", bd=1, relief="groove")
+    EDIT_Filter_2_Projs2BanalysedR.pack(fill=BOTH, expand=1, side="bottom")
 
 
-    EDIT_Filter_2_Projs2Banalysed.grab_set()
+    EDIT_Filter_2_Projs2BanalysedBase.grab_set()
+
+    ViewResults = scrolledtext.ScrolledText(EDIT_Filter_2_Projs2BanalysedR,
+                                              wrap=tkinter.WORD,
+
+                                              height=10,width =80,
+                                              font=("Segoe UI",
+                                                    10), background="white", foreground='Dodgerblue4')
+    ViewResults.configure(state='disabled')
+    #KeyWordsInputPane.ScrolledText()
+    ViewResults.grid(column=1, row=2,padx=5, pady=10,sticky='W',columnspan = 4)
+    ViewResults.focus()
+
+
+
+
+
 
 
     Label(EDIT_Filter_2_Projs2Banalysed, font=("Segoe UI", 9),bg= "white" ,text="Include project labels\n WITH keywords").grid(column=0, row=1,
                                                                                                        padx=5, pady=10,
                                                                                                        sticky='W')
+
+
 
 
 
@@ -1338,12 +1371,38 @@ def Filter_2_Prj2Anlys ():
         Memory1_Proj2BanlysedWith = str(KeyWordsInputPane.get("1.0", tkinter.END))
         Memory1_Proj2BanlysedWithOut = str(KeyWordsInputPaneWithout.get("1.0", tkinter.END))
         MemoryCheckBoxNolabel = var1.get()
-        EDIT_Filter_2_Projs2Banalysed.destroy()
+        EDIT_Filter_2_Projs2BanalysedBase.destroy()
 
 
-    Button(EDIT_Filter_2_Projs2Banalysed, font=("Segoe UI", 9), text="     Save     ", command=Apply_Filter_2,
+    def RefreshView():
+        ViewResults.configure(state='normal')
+        ViewResults.delete('0.0', END)
+
+        global Memory1_Proj2BanlysedWith,Memory1_Proj2BanlysedWithOut,\
+            Memory1_Proj2BanlysedWithList,Memory1_Proj2BanlysedWithOutList,MemoryCheckBoxNolabel
+
+        Memory1_Proj2BanlysedWithList = str(KeyWordsInputPane.get("1.0", tkinter.END)).replace(" ","").replace("\n","").split(",")
+        Memory1_Proj2BanlysedWithOutList = str(KeyWordsInputPaneWithout.get("1.0", tkinter.END)).replace(" ","").replace("\n","").split(",")
+
+        Memory1_Proj2BanlysedWith = str(KeyWordsInputPane.get("1.0", tkinter.END))
+        Memory1_Proj2BanlysedWithOut = str(KeyWordsInputPaneWithout.get("1.0", tkinter.END))
+        MemoryCheckBoxNolabel = var1.get()
+
+        ListforDisplay = GetFilteredProjectsForAnalysis_Func2()
+        for proj in ListforDisplay:
+            #print(proj)
+
+            ViewResults.insert(tkinter.INSERT, proj+"\n")
+
+        ViewResults.configure(state='disabled')
+
+    Button(EDIT_Filter_2_Projs2BanalysedR, font=("Segoe UI", 9), text="     Close     ", command=Apply_Filter_2,
            fg="white", bg="Dodgerblue4",activebackground='white',
-           relief="raised").grid(column=2, row=3,padx=110, pady=10,sticky='W',columnspan = 1)
+           relief="raised").grid(column=4, row=4,padx=80, pady=10,sticky='W',columnspan = 1)
+
+    Button(EDIT_Filter_2_Projs2BanalysedR, font=("Segoe UI", 9), text=" Refresh projects ", command=RefreshView,
+           fg="white", bg="Dodgerblue4", activebackground='white',
+           relief="raised").grid(column=1, row=4, padx=5, pady=10, sticky='W', columnspan=1)
 
 
     def Reset():
@@ -1360,9 +1419,9 @@ def Filter_2_Prj2Anlys ():
         #filterDropDown_w_wo_DevProjRevs = FilterDropDown_3_WWO.get()
         #Update_3_DevPathsDropDown(ProjectCheckPointsList_3)
 
-    Button(EDIT_Filter_2_Projs2Banalysed, font=("Segoe UI", 9), text=" Reset Fields ", command=Reset,
+    Button(EDIT_Filter_2_Projs2Banalysed, font=("Segoe UI", 9), text=" Clear Fields ", command=Reset,
            fg="white", bg="Dodgerblue4",activebackground='white',
-           relief="raised").grid(column=2, row=3, padx=5, pady=10, sticky='W', columnspan=1)
+           relief="raised").grid(column=0, row=0, padx=4, pady=5, sticky='W', columnspan=1)
 
 
 
@@ -2266,13 +2325,14 @@ ct.insert('', 'end', "EPB4_O", text="EPB4 and Uncategorised")
 ct.insert('', 'end', "CAT6_EPB_Redundant", text="EPB Redundant")
 #ct.insert('', 'end', "SSM_PB", text="SSM_PBC Projects")
 # ----Vertical scrollbar----------
-vbar = tkinter.Scrollbar(FrameLeft_Notebook_frame_02, orient=VERTICAL, command=ct.yview,relief="flat")
+vbar = tkinter.Scrollbar(ct, orient=VERTICAL, command=ct.yview,relief="flat")
 vbar.pack(side = "right" , fill=Y)
 # ----horizontal scrollbar----------
-hbar = tkinter.Scrollbar(FrameLeft_Notebook_frame_01T, orient=HORIZONTAL, command=ct.xview,relief="flat")
+hbar = tkinter.Scrollbar(ct, orient=HORIZONTAL, command=ct.xview,relief="flat")
 hbar.pack(side = "bottom", fill=X)
 
-ct.configure(xscrollcommand=hbar.set,yscrollcommand=vbar.set)
+ct.configure(yscrollcommand=vbar.set)
+ct.configure(xscrollcommand=hbar.set)
 
 
 def UpdateProjects():
